@@ -1,5 +1,4 @@
-/* Rossini preview: dark walnut room on top, marble for what you read and do.
-   Colours from the logo and the renovated room (walnut, marble, brass, banquette coral). */
+/* Mosaïque: dark room on top, marble for what you read and do. */
 :root{--night:#140D0A;--wood:#1C110D;--panel:#2A1B15;--ink:#080809;--marble:#EFEBE4;--paper:#FAF8F3;--stone:#DEDBD5;--brass:#E88806;--brass-lt:#F2B24E;--coral:#8C4A35;--coral-dk:#774231;--rose:#94080F;--mute:#5B5A55;--mute-dk:#B9B1A5;--line:#D8D3C9;--line-dk:#3D2A21;--h:68px}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -145,7 +144,7 @@ h1,h2,h3{font-family:"Antonio","Hanken Grotesk",sans-serif;font-weight:400;text-
 .soft{color:var(--mute);font-size:16px}
 .lnk{font-weight:600;display:inline-block;padding:6px 0;text-underline-offset:4px}
 
-/* ---- v2: photography first ---- */
+/* ---- photography ---- */
 .hdr--over{position:fixed;left:0;right:0;top:0;background:linear-gradient(#140D0AD9,#140D0A00);border-bottom-color:transparent;transition:background .35s,border-color .35s}
 .hdr--over.solid{background:var(--night);border-bottom-color:var(--line-dk)}
 .js .rv{opacity:0;transform:translateY(30px);transition:opacity .9s ease var(--d,0s),transform .9s cubic-bezier(.2,.8,.2,1) var(--d,0s)}

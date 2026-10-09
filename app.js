@@ -160,6 +160,6 @@
   try {
     if (/[?&]noedit\b/.test(location.search)) localStorage.removeItem('mq-edit');
     else if (/[?&]edit\b/.test(location.search)) localStorage.setItem('mq-edit', '1');
-    if (localStorage.getItem('mq-edit')) { var s = document.createElement('script'); s.src = 'edit.js?v=1'; document.body.appendChild(s); }
+    if (localStorage.getItem('mq-edit')) { var s = document.createElement('script'); s.src = 'edit.js?v=2'; document.body.appendChild(s); }
   } catch (e) {}
 })();

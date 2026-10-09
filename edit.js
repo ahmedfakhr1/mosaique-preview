@@ -172,7 +172,7 @@
         ci.oninput = function () { sel.style.color = ci.value; st[k2] = st[k2] || {}; st[k2].color = ci.value; save(); };
       }
     } else if (tab === 'Photos') {
-      body.innerHTML = '<p class="n">Tap any photo on the page to swap it with one from this device. Send me the original files too.</p>';
+      body.innerHTML = '<p class="n">Tap any photo on the page to swap it with one from this device. Keep the original files to send later.</p>';
       var p = pg(S.photos);
       for (var k3 in p) { var d = document.createElement('div'); d.className = 'mqe-r'; d.innerHTML = '<span>' + short(p[k3].alt || p[k3].from) + ' → ' + p[k3].name + '</span>'; body.appendChild(d); }
     } else if (tab === 'Sections') {
@@ -262,7 +262,7 @@
   }
   function showOut(txt, copied) {
     var o = document.createElement('div'); o.className = 'mqe mqe-out';
-    o.innerHTML = '<div><b>' + (copied ? 'Copied. Paste it to Claude.' : 'Select all and copy, then paste it to Claude.') + '</b><textarea readonly></textarea><button class="x pr">Done</button></div>';
+    o.innerHTML = '<div><b>' + (copied ? 'Changes copied.' : 'Select all and copy.') + '</b><textarea readonly></textarea><button class="x pr">Done</button></div>';
     o.querySelector('textarea').value = txt; o.querySelector('button').onclick = function () { o.remove(); };
     document.body.appendChild(o);
   }
