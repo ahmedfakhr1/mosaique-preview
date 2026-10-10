@@ -34,8 +34,10 @@
   function fit() {
     vw = box.clientWidth; vh = box.clientHeight;
     cv.width = lay.width = Math.round(vw * dpr); cv.height = lay.height = Math.round(vh * dpr);
-    k0 = Math.min(Math.max(vw / W, vh / H), vw * 0.86 / 1260);
-    ox = (vw - W * k0) / 2; oy = (vh - H * k0) / 2 - 615 * k0 + H * k0 / 2;
+    // portrait: the word spans the width and the mat runs past the edges; landscape: the whole mat shows, floor tiles around it
+    var port = vh > vw * 1.1;
+    k0 = port ? Math.min(vw * 0.86 / 1260, vh * 0.86 / H) : Math.min(vw * 0.9 / W, vh * 0.84 / H);
+    ox = (vw - W * k0) / 2; oy = port ? vh / 2 - 615 * k0 : (vh - H * k0) / 2;
     buildFill();
   }
   // plain floor tiles around the mat, so the mosaic always fills the screen
@@ -116,8 +118,12 @@
   }
   function out() {
     if (ended) return; ended = true;
-    box.style.transition = 'opacity .45s ease'; box.style.opacity = '0';
-    setTimeout(function () { root.classList.remove('mql'); box.remove(); }, 480);
+    var ease = 'cubic-bezier(.45,0,.25,1)';
+    box.style.transition = 'opacity 1.1s ' + ease + ', transform 1.1s ' + ease + ', filter 1.1s ' + ease;
+    box.style.transformOrigin = '50% ' + Math.round(oy + 615 * k0) + 'px';
+    box.style.opacity = '0'; box.style.transform = 'scale(1.06)'; box.style.filter = 'blur(6px)';
+    root.classList.remove('mql'); box.style.display = 'block'; box.style.position = 'fixed'; box.style.inset = '0'; box.style.zIndex = '9999'; box.style.pointerEvents = 'none';
+    setTimeout(function () { box.remove(); }, 1150);
   }
   box.addEventListener('click', out);
   document.addEventListener('keydown', out, { once: true });
