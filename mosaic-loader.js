@@ -23,7 +23,7 @@
     var col = 'rgb(' + Math.min(255, Math.round(base[0] * v + warm)) + ',' + Math.min(255, Math.round(base[1] * v)) + ',' + Math.min(255, Math.round(base[2] * v - warm)) + ')';
     var sp = [];
     if (k === 0) { var m = rnd() < 0.55 ? (rnd() < 0.4 ? 2 : 1) : 0; for (j = 0; j < m; j++) sp.push((rnd() - 0.5) * 9, (rnd() - 0.5) * 9, 0.6 + rnd() * 1.1); }
-    tiles.push({ k: k, x: cx, y: cy, p: pts, c: col, s: sp, t0: 0, a: 0 });
+    tiles.push({ k: k, x: cx, y: cy, p: pts, c: col, s: sp, t0: 0, w: k === 1 && cx > 320 && cx < 1610 && cy > 400 && cy < 810 });
   }
 
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -34,8 +34,24 @@
   function fit() {
     vw = box.clientWidth; vh = box.clientHeight;
     cv.width = lay.width = Math.round(vw * dpr); cv.height = lay.height = Math.round(vh * dpr);
-    k0 = Math.min(vw * (vw < 700 ? 0.92 : 0.8) / W, vh * 0.78 / H);
-    ox = (vw - W * k0) / 2; oy = (vh - H * k0) / 2;
+    k0 = Math.min(Math.max(vw / W, vh / H), vw * 0.86 / 1260);
+    ox = (vw - W * k0) / 2; oy = (vh - H * k0) / 2 - 615 * k0 + H * k0 / 2;
+    buildFill();
+  }
+  // plain floor tiles around the mat, so the mosaic always fills the screen
+  var fill = [], S = 19.2;
+  function buildFill() {
+    fill = [];
+    var x0 = -ox / k0, y0 = -oy / k0, x1 = (vw - ox) / k0, y1 = (vh - oy) / k0, fs = 11;
+    for (var gy = Math.floor(y0 / S) * S; gy < y1; gy += S)
+      for (var gx = Math.floor(x0 / S) * S; gx < x1; gx += S) {
+        if (gx >= -2 && gx + S <= W + 2 && gy >= -2 && gy + S <= H + 2) continue;
+        fs = (fs * 16807) % 2147483647; var r1 = fs / 2147483647; fs = (fs * 16807) % 2147483647; var r2 = fs / 2147483647;
+        var z = S - 2.6 - r2 * 1.6, h = z / 2, v = 0.9 + r1 * 0.12 - (r2 < 0.18 ? 0.06 : 0);
+        fill.push({ k: 0, x: gx + S / 2 + (r1 - 0.5) * 2.4, y: gy + S / 2 + (r2 - 0.5) * 2.4, p: [-h, -h, h, -h, h, h, -h, h],
+          c: 'rgb(' + Math.round(COL[0][0] * v) + ',' + Math.round(COL[0][1] * v) + ',' + Math.round(COL[0][2] * v) + ')', s: r1 < 0.35 ? [(r2 - 0.5) * 8, (r1 - 0.5) * 8, 0.8] : [],
+          t0: START + Math.pow(r1 * 0.6 + r2 * 0.4, 0.92) * SPREAD });
+      }
   }
   function frameOn(c2) { c2.setTransform(dpr * k0, 0, 0, dpr * k0, dpr * ox, dpr * oy); }
   function drawTile(c2, t, a, sc) {
@@ -48,30 +64,35 @@
     c2.restore();
   }
   function mat(c2, a) {
-    c2.globalAlpha = a; c2.shadowColor = 'rgba(0,0,0,.45)'; c2.shadowBlur = 40 * k0 * dpr; c2.fillStyle = GROUT;
-    c2.fillRect(0, 0, W, H); c2.shadowBlur = 0; c2.globalAlpha = 1;
+    c2.save(); c2.setTransform(1, 0, 0, 1, 0, 0); c2.globalAlpha = a; c2.fillStyle = GROUT;
+    c2.fillRect(0, 0, c2.canvas.width, c2.canvas.height); c2.restore();
   }
 
   // random order: each tile gets its own start time
-  var SPREAD = 1700, DUR = 420, START = 200;
-  tiles.forEach(function (t) { t.t0 = START + Math.pow(rnd(), 0.92) * SPREAD; });
-  tiles.sort(function (a, b) { return a.t0 - b.t0; });
+  // the word is laid first, then the floor around it; both in random order
+  var SPREAD = 820, DUR = 280, START = 110, WORD0 = 50, WORDSPREAD = 430;
+  tiles.forEach(function (t) { t.t0 = t.w ? WORD0 + rnd() * WORDSPREAD : START + Math.pow(rnd(), 0.92) * SPREAD; });
+  var order;
+  function schedule() { order = tiles.concat(fill).filter(function (t) { return !t.done; }); order.sort(function (a, b) { return a.t0 - b.t0; }); next = 0; active = []; }
   var t0 = performance.now(), next = 0, active = [], matDone = false, ended = false;
 
-  fit(); lctx.clearRect(0, 0, lay.width, lay.height);
+  fit(); schedule(); lctx.clearRect(0, 0, lay.width, lay.height);
   window.addEventListener('resize', function () {
-    fit(); lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lay.width, lay.height); frameOn(lctx); mat(lctx, 1);
+    if (ended) return;
+    fit(); lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lay.width, lay.height); if (matDone) mat(lctx, 1); frameOn(lctx);
     tiles.forEach(function (t) { if (t.done) drawTile(lctx, t, 1, 1); });
+    var el = performance.now() - t0; fill.forEach(function (t) { if (t.t0 + DUR < el) { t.done = true; drawTile(lctx, t, 1, 1); } });
+    schedule(); while (next < order.length && order[next].t0 <= el) active.push(order[next++]);
   });
 
   function tick(now) {
     if (ended) return;
     var el = reduce ? 1e9 : now - t0;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-    var ma = Math.min(1, el / 260);
+    var ma = Math.min(1, el / 120);
     if (!matDone) { if (ma >= 1) { frameOn(lctx); mat(lctx, 1); matDone = true; } else { frameOn(ctx); mat(ctx, ma); } }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(lay, 0, 0);
-    while (next < tiles.length && tiles[next].t0 <= el) active.push(tiles[next++]);
+    while (next < order.length && order[next].t0 <= el) active.push(order[next++]);
     frameOn(ctx); frameOn(lctx);
     var still = [];
     for (var i = 0; i < active.length; i++) {
@@ -81,7 +102,7 @@
       drawTile(ctx, t, e, 0.82 + 0.18 * e); still.push(t);
     }
     active = still;
-    if (next >= tiles.length && !active.length) return finish();
+    if (next >= order.length && !active.length) return finish();
     requestAnimationFrame(tick);
   }
   var loaded = document.readyState === 'complete';
@@ -89,14 +110,14 @@
   function finish() {
     var waited = 0;
     (function wait() {
-      if (loaded || waited > 2000) return setTimeout(out, reduce ? 300 : 650);
+      if (loaded || waited > 2000) return setTimeout(out, reduce ? 300 : 380);
       waited += 100; setTimeout(wait, 100);
     })();
   }
   function out() {
     if (ended) return; ended = true;
-    box.style.transition = 'opacity .6s ease'; box.style.opacity = '0';
-    setTimeout(function () { root.classList.remove('mql'); box.remove(); }, 650);
+    box.style.transition = 'opacity .45s ease'; box.style.opacity = '0';
+    setTimeout(function () { root.classList.remove('mql'); box.remove(); }, 480);
   }
   box.addEventListener('click', out);
   document.addEventListener('keydown', out, { once: true });
